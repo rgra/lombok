@@ -226,7 +226,7 @@ public class PatchExtensionMethod {
 		MessageSend_postponedErrors.set(messageSend, new PostponedInvalidMethodError(problemReporter, messageSend, method, scope));
 	}
 	
-	public static TypeBinding resolveType(TypeBinding resolvedType, MessageSend methodCall, BlockScope scope) {
+	public static Object resolveType(TypeBinding resolvedType, MessageSend methodCall, BlockScope scope) {
 		List<Extension> extensions = new ArrayList<Extension>();
 		TypeDeclaration decl = scope.classScope().referenceContext;
 		

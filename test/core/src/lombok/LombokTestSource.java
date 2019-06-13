@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2014-2015 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,52 +64,52 @@ public class LombokTestSource {
 		for (String pl : platforms) if (pl.equalsIgnoreCase(platform)) return true;
 		return false;
 	}
-	
+
 	public boolean versionWithinLimit(int version) {
 		return version >= versionLowerLimit && version <= versionUpperLimit;
 	}
-	
+
 	public File getFile() {
 		return file;
 	}
-	
+
 	public String getContent() {
 		return content;
 	}
-	
+
 	public LombokImmutableList<CompilerMessageMatcher> getMessages() {
 		return messages;
 	}
-	
+
 	public boolean isIgnore() {
 		return ignore;
 	}
-	
+
 	public boolean forceUnchanged() {
 		return unchanged;
 	}
-	
+
 	public boolean isSkipCompareContent() {
 		return skipCompareContent;
 	}
-	
+
 	public String getSpecifiedEncoding() {
 		return specifiedEncoding;
 	}
-	
+
 	public ConfigurationResolver getConfiguration() {
 		return configuration;
 	}
-	
+
 	public Map<String, String> getFormatPreferences() {
 		return formatPreferences;
 	}
-	
+
 	private static final Pattern VERSION_STYLE_1 = Pattern.compile("^(\\d+)$");
 	private static final Pattern VERSION_STYLE_2 = Pattern.compile("^\\:(\\d+)$");
 	private static final Pattern VERSION_STYLE_3 = Pattern.compile("^(\\d+):$");
 	private static final Pattern VERSION_STYLE_4 = Pattern.compile("^(\\d+):(\\d+)$");
-	
+
 	private int[] parseVersionLimit(String spec) {
 		/* Single version: '5' */ {
 			Matcher m = VERSION_STYLE_1.matcher(spec);
@@ -117,34 +118,34 @@ public class LombokTestSource {
 				return new int[] {v, v};
 			}
 		}
-		
+
 		/* Upper bound: ':5' (inclusive) */ {
 			Matcher m = VERSION_STYLE_2.matcher(spec);
 			if (m.matches()) return new int[] {0, Integer.parseInt(m.group(1))};
 		}
-		
+
 		/* Lower bound '5:' (inclusive) */ {
 			Matcher m = VERSION_STYLE_3.matcher(spec);
 			if (m.matches()) return new int[] {Integer.parseInt(m.group(1)), Integer.MAX_VALUE};
 		}
-		
+
 		/* Range '7:8' (inclusive) */ {
 			Matcher m = VERSION_STYLE_4.matcher(spec);
 			if (m.matches()) return new int[] {Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))};
 		}
-		
+
 		return null;
 	}
-	
+
 	private static final Pattern IGNORE_PATTERN = Pattern.compile("^\\s*ignore\\s*(?:[-:].*)?$", Pattern.CASE_INSENSITIVE);
 	private static final Pattern UNCHANGED_PATTERN = Pattern.compile("^\\s*unchanged\\s*(?:[-:].*)?$", Pattern.CASE_INSENSITIVE);
 	private static final Pattern SKIP_COMPARE_CONTENT_PATTERN = Pattern.compile("^\\s*skip[- ]?compare[- ]?contents?\\s*(?:[-:].*)?$", Pattern.CASE_INSENSITIVE);
-	
+
 	private LombokTestSource(File file, String content, List<CompilerMessageMatcher> messages, List<String> directives) {
 		this.file = file;
 		this.content = content;
 		this.messages = messages == null ? LombokImmutableList.<CompilerMessageMatcher>of() : LombokImmutableList.copyOf(messages);
-		
+
 		StringBuilder conf = new StringBuilder();
 		int versionLower = 0;
 		int versionUpper = Integer.MAX_VALUE;
@@ -154,7 +155,7 @@ public class LombokTestSource {
 		String encoding = null;
 		Map<String, String> formats = new HashMap<String, String>();
 		String[] platformLimit = null;
-		
+
 		for (String directive : directives) {
 			directive = directive.trim();
 			String lc = directive.toLowerCase();
@@ -162,17 +163,17 @@ public class LombokTestSource {
 				ignore = true;
 				continue;
 			}
-			
+
 			if (UNCHANGED_PATTERN.matcher(directive).matches()) {
 				unchanged = true;
 				continue;
 			}
-			
+
 			if (SKIP_COMPARE_CONTENT_PATTERN.matcher(directive).matches()) {
 				skipCompareContent = true;
 				continue;
 			}
-			
+
 			if (lc.startsWith("platform ")) {
 				String platformDesc = lc.substring("platform ".length());
 				int idx = platformDesc.indexOf(':');
@@ -180,7 +181,7 @@ public class LombokTestSource {
 				platformLimit = platformDesc.split("\\s*,\\s*");
 				continue;
 			}
-			
+
 			if (lc.startsWith("version ")) {
 				int[] limits = parseVersionLimit(lc.substring(7).trim());
 				if (limits == null) {
@@ -191,18 +192,18 @@ public class LombokTestSource {
 				versionUpper = limits[1];
 				continue;
 			}
-			
+
 			if (lc.startsWith("conf:")) {
 				String confLine = directive.substring(5).trim();
 				conf.append(confLine).append("\n");
 				continue;
 			}
-			
+
 			if (lc.startsWith("encoding:")) {
 				encoding = directive.substring(9).trim();
 				continue;
 			}
-			
+
 			if (lc.startsWith("format:")) {
 				String formatLine = directive.substring(7).trim();
 				int idx = formatLine.indexOf('=');
@@ -212,9 +213,9 @@ public class LombokTestSource {
 				formats.put(key.toLowerCase(), value);
 				continue;
 			}
-			
+
 			if (lc.startsWith("issue ")) continue;
-			
+
 			Assert.fail("Directive line \"" + directive + "\" in '" + file.getAbsolutePath() + "' invalid: unrecognized directive.");
 			throw new RuntimeException();
 		}
@@ -230,14 +231,36 @@ public class LombokTestSource {
 				Assert.fail("Problem on directive line: " + problem + " at conf line #" + lineNumber + " (" + line + ")");
 			}
 		};
-		
 		this.configuration = new BubblingConfigurationResolver(Collections.singleton(StringConfigurationSource.forString(conf, reporter, file.getAbsolutePath())));
 		this.formatPreferences = Collections.unmodifiableMap(formats);
 	}
-	
+
+	public static String readConfiguration(File file) throws FileNotFoundException, UnsupportedEncodingException, IOException {
+		List<String> directives = readDirectivesList(file);
+
+		StringBuilder conf = new StringBuilder();
+		for (String directive : directives) {
+			directive = directive.trim();
+			String lc = directive.toLowerCase();
+
+			if (lc.startsWith("conf:")) {
+				String confLine = directive.substring(5).trim();
+				conf.append(confLine).append("\n");
+				continue;
+			}
+		}
+		return conf.toString();
+	}
+
 	public static LombokTestSource readDirectives(File file) throws IOException {
+		List<String> directives = readDirectivesList(file);
+
+		return new LombokTestSource(file, "", null, directives);
+	}
+
+	public static List<String> readDirectivesList(File file) throws FileNotFoundException, UnsupportedEncodingException, IOException {
 		List<String> directives = new ArrayList<String>();
-		
+
 		{
 			InputStream rawIn = new FileInputStream(file);
 			try {
@@ -245,7 +268,7 @@ public class LombokTestSource {
 				try {
 					for (String i = in.readLine(); i != null; i = in.readLine()) {
 						if (i.isEmpty()) continue;
-						
+
 						if (i.startsWith("//")) {
 							directives.add(i.substring(2));
 						} else {
@@ -261,18 +284,17 @@ public class LombokTestSource {
 				rawIn.close();
 			}
 		}
-		
-		return new LombokTestSource(file, "", null, directives);
+		return directives;
 	}
-	
+
 	public static LombokTestSource read(File sourceFolder, File messagesFolder, String fileName) throws IOException {
 		return read0(sourceFolder, messagesFolder, fileName, "UTF-8");
 	}
-	
+
 	private static LombokTestSource read0(File sourceFolder, File messagesFolder, String fileName, String encoding) throws IOException {
 		StringBuilder content = null;
 		List<String> directives = new ArrayList<String>();
-		
+
 		File sourceFile = new File(sourceFolder, fileName);
 		if (sourceFile.exists()) {
 			InputStream rawIn = new FileInputStream(sourceFile);
@@ -284,9 +306,9 @@ public class LombokTestSource {
 							content.append(i).append("\n");
 							continue;
 						}
-						
+
 						if (i.isEmpty()) continue;
-						
+
 						if (i.startsWith("//")) {
 							directives.add(i.substring(2));
 						} else {
@@ -303,9 +325,9 @@ public class LombokTestSource {
 				rawIn.close();
 			}
 		}
-		
+
 		if (content == null) content = new StringBuilder();
-		
+
 		List<CompilerMessageMatcher> messages = null;
 		if (messagesFolder != null) {
 			File messagesFile = new File(messagesFolder, fileName + ".messages");
@@ -321,15 +343,15 @@ public class LombokTestSource {
 				messages = null;
 			}
 		}
-		
+
 		LombokTestSource source = new LombokTestSource(sourceFile, content.toString(), messages, directives);
 		String specifiedEncoding = source.getSpecifiedEncoding();
-		
+
 		// The source file has an 'encoding' header to test encoding issues. Of course, reading the encoding header
 		// requires knowing the encoding of the file first. In practice we get away with it, because UTF-8 and US-ASCII are compatible enough.
 		// The fix is therefore to read in as UTF-8 initially, and if the file requests that it should be read as another encoding, toss it all
 		// and reread that way.
-		
+
 		if (specifiedEncoding == null || specifiedEncoding.equalsIgnoreCase(encoding)) return source;
 		return read0(sourceFolder, messagesFolder, fileName, specifiedEncoding);
 	}

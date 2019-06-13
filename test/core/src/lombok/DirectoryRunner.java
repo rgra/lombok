@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2009-2019 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,13 +27,13 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
-import lombok.eclipse.Eclipse;
-import lombok.javac.Javac;
-
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
+
+import lombok.eclipse.Eclipse;
+import lombok.javac.Javac;
 
 public class DirectoryRunner extends Runner {
 	private static final String DEBUG_FOCUS_ON_FILE = null;
@@ -43,7 +43,7 @@ public class DirectoryRunner extends Runner {
 			@Override public int getVersion() {
 				return Javac.getJavaCompilerVersion();
 			}
-		}, 
+		},
 		JAVAC {
 			@Override public int getVersion() {
 				return DELOMBOK.getVersion();
@@ -52,6 +52,11 @@ public class DirectoryRunner extends Runner {
 		ECJ {
 			@Override public int getVersion() {
 				return Eclipse.getEcjCompilerVersion();
+			}
+		},
+		TYCHO {
+			@Override public int getVersion() {
+				return 1;
 			}
 		};
 		
@@ -73,7 +78,7 @@ public class DirectoryRunner extends Runner {
 			return true;
 		}
 		
-		public abstract boolean expectChanges(); 
+		public abstract boolean expectChanges();
 	}
 	
 	private static final FileFilter JAVA_FILE_FILTER = new FileFilter() {
@@ -163,6 +168,8 @@ public class DirectoryRunner extends Runner {
 			return new RunTestsViaDelombok().createTester(params, file, "javac", params.getVersion());
 		case ECJ:
 			return new RunTestsViaEcj().createTester(params, file, "ecj", params.getVersion());
+		case TYCHO:
+			return new RunTestsViaTycho().createTester(params, file, "tycho", params.getVersion());
 		default:
 		case JAVAC:
 			throw new UnsupportedOperationException();

@@ -63,29 +63,29 @@ public class PatchVal {
 	// Also patches local declaration to not call .resolveType() on the initializer expression if we've already done so (calling it twice causes weird errors),
 	// and patches .resolve() on LocalDeclaration itself to just-in-time replace the 'val' vartype with the right one.
 	
-	public static TypeBinding skipResolveInitializerIfAlreadyCalled(Expression expr, BlockScope scope) {
-		if (expr.resolvedType != null) return expr.resolvedType;
-		try {
-			return expr.resolveType(scope);
-		} catch (NullPointerException e) {
-			return null;
-		} catch (ArrayIndexOutOfBoundsException e) {
-			// This will occur internally due to for example 'val x = mth("X");', where mth takes 2 arguments.
-			return null;
-		}
-	}
-	
-	public static TypeBinding skipResolveInitializerIfAlreadyCalled2(Expression expr, BlockScope scope, LocalDeclaration decl) {
-		if (decl != null && LocalDeclaration.class.equals(decl.getClass()) && expr.resolvedType != null) return expr.resolvedType;
-		try {
-			return expr.resolveType(scope);
-		} catch (NullPointerException e) {
-			return null;
-		} catch (ArrayIndexOutOfBoundsException e) {
-			// This will occur internally due to for example 'val x = mth("X");', where mth takes 2 arguments.
-			return null;
-		}
-	}
+//	public static TypeBinding skipResolveInitializerIfAlreadyCalled(Expression expr, BlockScope scope) {
+//		if (expr.resolvedType != null) return expr.resolvedType;
+//		try {
+//			return expr.resolveType(scope);
+//		} catch (NullPointerException e) {
+//			return null;
+//		} catch (ArrayIndexOutOfBoundsException e) {
+//			// This will occur internally due to for example 'val x = mth("X");', where mth takes 2 arguments.
+//			return null;
+//		}
+//	}
+//
+//	public static TypeBinding skipResolveInitializerIfAlreadyCalled2(Expression expr, BlockScope scope, LocalDeclaration decl) {
+//		if (decl != null && LocalDeclaration.class.equals(decl.getClass()) && expr.resolvedType != null) return expr.resolvedType;
+//		try {
+//			return expr.resolveType(scope);
+//		} catch (NullPointerException e) {
+//			return null;
+//		} catch (ArrayIndexOutOfBoundsException e) {
+//			// This will occur internally due to for example 'val x = mth("X");', where mth takes 2 arguments.
+//			return null;
+//		}
+//	}
 	
 	public static boolean matches(String key, char[] array) {
 		if (array == null || key.length() != array.length) return false;

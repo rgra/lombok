@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2014-2015 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,15 +25,25 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 class Main {
-	private static ShadowClassLoader classLoader;
-	
+
+	private static ClassLoader classLoader;
+
 	static synchronized ClassLoader getShadowClassLoader() {
 		if (classLoader == null) {
 			classLoader = new ShadowClassLoader(Main.class.getClassLoader(), "lombok", null, Arrays.<String>asList(), Arrays.asList("lombok.patcher.Symbols"));
 		}
 		return classLoader;
 	}
-	
+
+	static synchronized ClassLoader replaceShadowClassLoader(ClassLoader parent, final ClassLoader initialLoader) {
+		// When using Tycho we need to replace the classloader with the classes
+		// loaded by eclipse, so that the JDT classes are found
+		// But the LombokConfiguration needs to be loaded from the initial
+		// classloader, so we create a small hierarchy here
+		classLoader = new ShadowClassLoader(new HierarchyClassLoader(parent, initialLoader), "lombok", null, Arrays.<String>asList(), Arrays.asList("lombok.patcher.Symbols"));
+		return classLoader;
+	}
+
 	public static void main(String[] args) throws Throwable {
 		ClassLoader cl = getShadowClassLoader();
 		Class<?> mc = cl.loadClass("lombok.core.Main");
@@ -41,6 +51,25 @@ class Main {
 			mc.getMethod("main", String[].class).invoke(null, new Object[] {args});
 		} catch (InvocationTargetException e) {
 			throw e.getCause();
+		}
+	}
+
+	private static final class HierarchyClassLoader extends ClassLoader {
+		private final ClassLoader initialLoader;
+
+		private HierarchyClassLoader(ClassLoader parent, ClassLoader initialLoader) {
+			super(parent);
+			this.initialLoader = initialLoader;
+		}
+
+		@Override protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+			try {
+				Class<?> loadClass = initialLoader.loadClass(name);
+				return loadClass;
+			} catch (Exception e) {
+				// ignore
+			}
+			return super.loadClass(name, resolve);
 		}
 	}
 }
